@@ -39,9 +39,7 @@ const SERVICES = [
     duration: "45 Min.",
   },
 ];
-/* ============================================================
-   COMPONENTE RED DE PARTÍCULAS (CONEXIONES)
-   ============================================================ */
+
 const NetworkCanvas = () => {
   const canvasRef = useRef(null);
 
@@ -50,9 +48,8 @@ const NetworkCanvas = () => {
     const ctx = canvas.getContext("2d");
     let width, height;
     let particles = [];
-
-    // Mouse interaction
-    let mouse = { x: null, y: null, radius: 150 };
+    let animationId;
+    let mouse = { x: null, y: null, radius: 120 };
 
     const resize = () => {
       width = canvas.width = window.innerWidth;
@@ -64,21 +61,18 @@ const NetworkCanvas = () => {
       constructor() {
         this.x = Math.random() * width;
         this.y = Math.random() * height;
-        this.vx = (Math.random() - 0.5) * 0.5; // Velocidad lenta
-        this.vy = (Math.random() - 0.5) * 0.5;
-        this.size = Math.random() * 2 + 1; // Tamaño del punto
-        // Color base violeta claro
-        this.baseColor = `rgba(196, 181, 253, ${Math.random() * 0.5 + 0.1})`;
+        this.vx = (Math.random() - 0.5) * 0.3;
+        this.vy = (Math.random() - 0.5) * 0.3;
+        this.size = Math.random() * 2 + 1.5;
+        this.baseColor = `rgba(139, 168, 134, ${Math.random() * 0.3 + 0.2})`;
       }
       update() {
         this.x += this.vx;
         this.y += this.vy;
 
-        // Rebotar en bordes
         if (this.x < 0 || this.x > width) this.vx *= -1;
         if (this.y < 0 || this.y > height) this.vy *= -1;
 
-        // Interacción Mouse (Repulsión suave)
         if (mouse.x != null) {
           let dx = mouse.x - this.x;
           let dy = mouse.y - this.y;
@@ -87,8 +81,8 @@ const NetworkCanvas = () => {
             const forceDirectionX = dx / distance;
             const forceDirectionY = dy / distance;
             const force = (mouse.radius - distance) / mouse.radius;
-            const directionX = forceDirectionX * force * 2;
-            const directionY = forceDirectionY * force * 2;
+            const directionX = forceDirectionX * force * 1.5;
+            const directionY = forceDirectionY * force * 1.5;
             this.x -= directionX;
             this.y -= directionY;
           }
@@ -104,73 +98,140 @@ const NetworkCanvas = () => {
 
     const initParticles = () => {
       particles = [];
-      // Número de nodos: menos partículas para que las líneas se vean mejor
-      const particleCount = Math.min(Math.floor(window.innerWidth / 12), 90);
+      const particleCount = Math.min(Math.floor(window.innerWidth / 9), 100);
       for (let i = 0; i < particleCount; i++) {
         particles.push(new Particle());
       }
     };
 
-    // --- AQUÍ ESTÁ LA MAGIA DE LAS CONEXIONES ---
     const connect = () => {
-      let opacityValue = 1;
       for (let a = 0; a < particles.length; a++) {
-        for (let b = a; b < particles.length; b++) {
-          // Calcular distancia entre punto A y punto B
+        for (let b = a + 1; b < particles.length; b++) {
           let dx = particles[a].x - particles[b].x;
           let dy = particles[a].y - particles[b].y;
           let distance = dx * dx + dy * dy;
 
-          // Si están cerca (distancia al cuadrado menor que el umbral)
-          // Ajusta el número 15000 para cambiar la distancia máxima de conexión
-          if (distance < (width / 7) * (height / 7)) {
-            opacityValue = 1 - distance / 20000;
-            if (opacityValue > 0) {
-              ctx.strokeStyle = `rgba(196, 181, 253, ${opacityValue * 0.4})`; // Color línea lavanda
-              ctx.lineWidth = 1;
-              ctx.beginPath();
-              ctx.moveTo(particles[a].x, particles[a].y);
-              ctx.lineTo(particles[b].x, particles[b].y);
-              ctx.stroke();
-            }
+          if (distance < 12000) {
+            let opacityValue = 1 - distance / 12000;
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = `rgba(139, 168, 134, ${opacityValue * 0.25})`;
+            ctx.beginPath();
+            ctx.moveTo(particles[a].x, particles[a].y);
+            ctx.lineTo(particles[b].x, particles[b].y);
+            ctx.stroke();
           }
         }
       }
     };
 
     const animate = () => {
-      requestAnimationFrame(animate);
       ctx.clearRect(0, 0, width, height);
-
       particles.forEach((particle) => {
         particle.update();
         particle.draw();
       });
+      connect();
+      animationId = requestAnimationFrame(animate);
+    };
 
-      connect(); // Dibujar las líneas
+    const handleMouseMove = (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY + window.scrollY;
+    };
+
+    const handleMouseOut = () => {
+      mouse.x = null;
+      mouse.y = null;
     };
 
     window.addEventListener("resize", resize);
-    window.addEventListener("mousemove", (e) => {
-      mouse.x = e.clientX;
-      mouse.y = e.clientY + window.scrollY;
-    });
-    window.addEventListener("mouseout", () => {
-      mouse.x = null;
-      mouse.y = null;
-    });
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseout", handleMouseOut);
 
-    setTimeout(() => {
-      resize();
-      animate();
-    }, 100);
+    resize();
+    animate();
 
-    return () => window.removeEventListener("resize", resize);
+    return () => {
+      window.removeEventListener("resize", resize);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseout", handleMouseOut);
+      cancelAnimationFrame(animationId);
+    };
   }, []);
 
   return <canvas ref={canvasRef} className="hero__canvas" />;
 };
-function useScrolled(threshold = 40) {
+
+const GlobulesCanvas = () => {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    let width, height;
+    let particles = [];
+    let animationId;
+
+    const resize = () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = canvas.parentElement.offsetHeight;
+      initParticles();
+    };
+
+    class Globule {
+      constructor() {
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.vx = (Math.random() - 0.5) * 0.1;
+        this.vy = (Math.random() - 0.5) * 0.1;
+        this.size = Math.random() * 2 + 0.5;
+        this.opacity = Math.random() * 0.15 + 0.05;
+      }
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        if (this.x < 0 || this.x > width) this.vx *= -1;
+        if (this.y < 0 || this.y > height) this.vy *= -1;
+      }
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+        ctx.fill();
+      }
+    }
+
+    const initParticles = () => {
+      particles = [];
+      const count = Math.min(Math.floor(window.innerWidth / 20), 60);
+      for (let i = 0; i < count; i++) {
+        particles.push(new Globule());
+      }
+    };
+
+    const animate = () => {
+      ctx.clearRect(0, 0, width, height);
+      particles.forEach((p) => {
+        p.update();
+        p.draw();
+      });
+      animationId = requestAnimationFrame(animate);
+    };
+
+    window.addEventListener("resize", resize);
+    resize();
+    animate();
+
+    return () => {
+      window.removeEventListener("resize", resize);
+      cancelAnimationFrame(animationId);
+    };
+  }, []);
+
+  return <canvas ref={canvasRef} className="globules__canvas" />;
+};
+
+function useScrolled(threshold = 50) {
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > threshold);
@@ -193,7 +254,7 @@ function useReveal() {
           obs.disconnect();
         }
       },
-      { threshold: 0.12 },
+      { threshold: 0.1, rootMargin: "0px 0px -50px 0px" },
     );
     obs.observe(el);
     return () => obs.disconnect();
@@ -225,6 +286,7 @@ export default function App() {
     message: "",
   });
   const [sent, setSent] = useState(false);
+  const [focusedField, setFocusedField] = useState(null);
 
   const closeMenu = () => setMenuOpen(false);
   const onChange = (e) =>
@@ -238,46 +300,51 @@ export default function App() {
     <div className="app">
       {/* ── NAV ── */}
       <nav className={`nav${scrolled ? " nav--scrolled" : ""}`}>
-        <a href="#hero" className="nav__logo" onClick={closeMenu}>
-          <span>Britta Piesbergen</span>
-          <small>Homöopathie</small>
-        </a>
+        <div className="nav__container">
+          <a href="#hero" className="nav__logo" onClick={closeMenu}>
+            <span className="nav__logo-name">Britta Piesbergen</span>
+            <span className="nav__logo-tag">Homöopathie</span>
+          </a>
 
-        <button
-          className={`nav__burger${menuOpen ? " nav__burger--open" : ""}`}
-          onClick={() => setMenuOpen((o) => !o)}
-          aria-label="Menü öffnen"
-        >
-          <span />
-          <span />
-          <span />
-        </button>
+          <button
+            className={`nav__burger${menuOpen ? " nav__burger--open" : ""}`}
+            onClick={() => setMenuOpen((o) => !o)}
+            aria-label="Menü öffnen"
+            aria-expanded={menuOpen}
+          >
+            <span />
+            <span />
+            <span />
+          </button>
 
-        <ul className={`nav__links${menuOpen ? " nav__links--open" : ""}`}>
-          {[
-            ["#ueber-mich", "Über mich"],
-            ["#leistungen", "Leistungen"],
-            ["#kontakt", "Kontakt"],
-          ].map(([href, label]) => (
-            <li key={href}>
-              <a href={href} onClick={closeMenu}>
-                {label}
+          <ul className={`nav__links${menuOpen ? " nav__links--open" : ""}`}>
+            {[
+              ["#ueber-mich", "Über mich"],
+              ["#leistungen", "Leistungen"],
+              ["#kontakt", "Kontakt"],
+            ].map(([href, label]) => (
+              <li key={href}>
+                <a href={href} onClick={closeMenu} className="nav__link">
+                  {label}
+                </a>
+              </li>
+            ))}
+            <li>
+              <a href="#kontakt" className="nav__cta" onClick={closeMenu}>
+                Termin anfragen
               </a>
             </li>
-          ))}
-          <li>
-            <a href="#kontakt" className="nav__cta" onClick={closeMenu}>
-              Termin anfragen
-            </a>
-          </li>
-        </ul>
+          </ul>
+        </div>
       </nav>
 
       {/* ── HERO ── */}
       <section className="hero" id="hero">
         <div className="hero__canvas-container">
           <NetworkCanvas />
+          <GlobulesCanvas />
         </div>
+
         <div className="hero__bg" aria-hidden="true">
           <div className="blob blob--1" />
           <div className="blob blob--2" />
@@ -287,19 +354,28 @@ export default function App() {
         <div className="hero__inner container">
           <div className="hero__text">
             <span className="eyebrow">Homöopathische Praxis · Koblenz</span>
-            <h1>
+            <h1 className="hero__title">
               Natürliche Heilung
-              <br />
-              <em>beginnt von innen</em>
+              <span className="hero__title-accent">beginnt von innen</span>
             </h1>
-            <p>
+            <p className="hero__subtitle">
               Ich begleite Sie auf Ihrem Weg zu einem gesunden und harmonischen
               Leben — einfühlsam, ganzheitlich und individuell auf Sie
               abgestimmt.
             </p>
             <div className="hero__actions">
               <a href="#kontakt" className="btn btn--primary">
-                Termin vereinbaren
+                <span>Termin vereinbaren</span>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
               </a>
               <a href="#ueber-mich" className="btn btn--ghost">
                 Über mich
@@ -310,40 +386,24 @@ export default function App() {
           <div className="hero__visual" aria-hidden="true">
             <div className="hero__ring hero__ring--outer" />
             <div className="hero__ring hero__ring--inner" />
-            <div className="photo-frame">
-              <svg
-                className="photo-frame__silhouette"
-                viewBox="0 0 200 240"
-                fill="none"
-              >
-                <circle cx="100" cy="82" r="46" fill="#C4B5FD" opacity=".7" />
-                <ellipse
-                  cx="100"
-                  cy="200"
-                  rx="68"
-                  ry="52"
-                  fill="#C4B5FD"
-                  opacity=".7"
-                />
-              </svg>
-              <span className="photo-frame__label">Foto folgt</span>
+
+            <div className="hero__main-flower">
+              <JacarandaFlower />
             </div>
+
             <div className="hero__badge">
-              <span className="badge__n">30+</span>
+              <span className="badge__n">15+</span>
               <span className="badge__label">
                 Jahre
                 <br />
                 Erfahrung
               </span>
             </div>
-            <div className="hero__jacaranda" aria-hidden="true">
-              <JacarandaFlower />
-            </div>
           </div>
         </div>
 
         <div className="hero__scroll" aria-hidden="true">
-          <span>Entdecken</span>
+          <span>Scroll</span>
           <div className="scroll-line" />
         </div>
       </section>
@@ -355,14 +415,32 @@ export default function App() {
             <div className="about__frame">
               <div className="about__photo">
                 <svg viewBox="0 0 200 240" fill="none">
-                  <circle cx="100" cy="82" r="50" fill="#DDD6FE" opacity=".8" />
+                  <defs>
+                    <linearGradient
+                      id="grad1"
+                      x1="0%"
+                      y1="0%"
+                      x2="100%"
+                      y2="100%"
+                    >
+                      <stop offset="0%" stopColor="#d4e4d1" />
+                      <stop offset="100%" stopColor="#b8d4b4" />
+                    </linearGradient>
+                  </defs>
+                  <circle
+                    cx="100"
+                    cy="82"
+                    r="50"
+                    fill="url(#grad1)"
+                    opacity=".6"
+                  />
                   <ellipse
                     cx="100"
                     cy="205"
                     rx="74"
                     ry="54"
-                    fill="#DDD6FE"
-                    opacity=".8"
+                    fill="url(#grad1)"
+                    opacity=".6"
                   />
                 </svg>
                 <span>Foto folgt</span>
@@ -390,8 +468,7 @@ export default function App() {
               Nach meiner Ausbildung zur Heilpraktikerin spezialisierte ich mich
               auf die klassische Homöopathie nach Samuel Hahnemann. Seitdem
               begleite ich Menschen aller Altersgruppen — von Säuglingen bis ins
-              hohe Alter — auf ihrem ganz persönlichen Heilungsweg. Jeder Mensch
-              ist einzigartig, und so ist auch jede Behandlung in meiner Praxis.
+              hohe Alter — auf ihrem ganz persönlichen Heilungsweg.
             </p>
             <div className="credentials">
               {[
@@ -400,8 +477,19 @@ export default function App() {
                 ["Mitglied DZVhÄ & DHU", "Deutsche Homöopathie-Verbände"],
               ].map(([title, sub]) => (
                 <div className="credential" key={title}>
-                  <div className="credential__dot" />
-                  <div>
+                  <div className="credential__icon">
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M20 6L9 17l-5-5" />
+                    </svg>
+                  </div>
+                  <div className="credential__text">
                     <strong>{title}</strong>
                     <span>{sub}</span>
                   </div>
@@ -428,13 +516,20 @@ export default function App() {
             </p>
           </div>
           <div className="services__grid">
-            {SERVICES.map(({ n, title, desc, duration }) => (
-              <div className="service-card" key={n}>
-                <span className="service-card__n">{n}</span>
+            {SERVICES.map(({ n, title, desc, duration }, index) => (
+              <div
+                className="service-card"
+                key={n}
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <div className="service-card__header">
+                  <span className="service-card__n">{n}</span>
+                  <div className="service-card__line" />
+                </div>
                 <h3>{title}</h3>
                 <p>{desc}</p>
                 <div className="service-card__footer">
-                  <span className="service-card__pill">ca. {duration}</span>
+                  <span className="service-card__pill">{duration}</span>
                 </div>
               </div>
             ))}
@@ -494,7 +589,7 @@ export default function App() {
               ].map(({ icon, label, value }) => (
                 <div className="contact__detail" key={label}>
                   <div className="contact__detail-icon">{icon}</div>
-                  <div>
+                  <div className="contact__detail-content">
                     <strong>{label}</strong>
                     <span>{value}</span>
                   </div>
@@ -528,6 +623,9 @@ export default function App() {
                     required
                     value={form.name}
                     onChange={onChange}
+                    focused={focusedField === "name"}
+                    onFocus={() => setFocusedField("name")}
+                    onBlur={() => setFocusedField(null)}
                   />
                   <Field
                     label="E-Mail *"
@@ -538,6 +636,9 @@ export default function App() {
                     required
                     value={form.email}
                     onChange={onChange}
+                    focused={focusedField === "email"}
+                    onFocus={() => setFocusedField("email")}
+                    onBlur={() => setFocusedField(null)}
                   />
                 </div>
                 <div className="form-row">
@@ -549,14 +650,21 @@ export default function App() {
                     placeholder="+49 40 …"
                     value={form.phone}
                     onChange={onChange}
+                    focused={focusedField === "phone"}
+                    onFocus={() => setFocusedField("phone")}
+                    onBlur={() => setFocusedField(null)}
                   />
-                  <div className="form-group">
+                  <div
+                    className={`form-group ${focusedField === "anliegen" ? "is-focused" : ""}`}
+                  >
                     <label htmlFor="anliegen">Anliegen</label>
                     <select
                       id="anliegen"
                       name="anliegen"
                       value={form.anliegen}
                       onChange={onChange}
+                      onFocus={() => setFocusedField("anliegen")}
+                      onBlur={() => setFocusedField(null)}
                     >
                       <option value="">Bitte wählen …</option>
                       {[
@@ -571,7 +679,9 @@ export default function App() {
                     </select>
                   </div>
                 </div>
-                <div className="form-group">
+                <div
+                  className={`form-group ${focusedField === "message" ? "is-focused" : ""}`}
+                >
                   <label htmlFor="message">Nachricht *</label>
                   <textarea
                     id="message"
@@ -581,10 +691,22 @@ export default function App() {
                     placeholder="Beschreiben Sie kurz Ihr Anliegen …"
                     value={form.message}
                     onChange={onChange}
+                    onFocus={() => setFocusedField("message")}
+                    onBlur={() => setFocusedField(null)}
                   />
                 </div>
                 <button type="submit" className="btn btn--primary btn--full">
-                  Nachricht absenden
+                  <span>Nachricht absenden</span>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+                  </svg>
                 </button>
                 <p className="form-note">
                   * Pflichtfelder · Ihre Daten werden vertraulich behandelt.
@@ -599,8 +721,10 @@ export default function App() {
       <footer className="footer">
         <div className="container footer__inner">
           <div className="footer__brand">
-            <span>Britta Piesbergen</span>
-            <small>Homöopathische Praxis · Hamburg</small>
+            <span className="footer__brand-name">Britta Piesbergen</span>
+            <span className="footer__brand-tag">
+              Homöopathische Praxis · Hamburg
+            </span>
           </div>
           <nav className="footer__nav" aria-label="Footer-Navigation">
             {[
@@ -616,7 +740,8 @@ export default function App() {
             ))}
           </nav>
           <p className="footer__copy">
-            © 2025 Britta Piesbergen · Alle Rechte vorbehalten
+            © {new Date().getFullYear()} Britta Piesbergen · Alle Rechte
+            vorbehalten
           </p>
         </div>
       </footer>
@@ -624,11 +749,9 @@ export default function App() {
   );
 }
 
-/* ── Small sub-components ── */
-
-function Field({ label, id, ...props }) {
+function Field({ label, id, focused, ...props }) {
   return (
-    <div className="form-group">
+    <div className={`form-group ${focused ? "is-focused" : ""}`}>
       <label htmlFor={id}>{label}</label>
       <input id={id} {...props} />
     </div>
@@ -637,21 +760,36 @@ function Field({ label, id, ...props }) {
 
 function JacarandaFlower() {
   return (
-    <svg viewBox="0 0 120 120" fill="none" aria-hidden="true">
+    <svg
+      viewBox="0 0 120 120"
+      fill="none"
+      aria-hidden="true"
+      className="flower-svg"
+    >
+      <defs>
+        <linearGradient id="petalGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#a8c5a4" />
+          <stop offset="100%" stopColor="#8ba886" />
+        </linearGradient>
+        <linearGradient id="petalGrad2" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#96b892" />
+          <stop offset="100%" stopColor="#7aa076" />
+        </linearGradient>
+      </defs>
       {[0, 60, 120, 180, 240, 300].map((deg, i) => (
         <ellipse
           key={deg}
           cx="60"
           cy="28"
-          rx="11"
-          ry="24"
-          fill={i % 2 === 0 ? "#C4B5FD" : "#A78BFA"}
+          rx="10"
+          ry="22"
+          fill={i % 2 === 0 ? "url(#petalGrad)" : "url(#petalGrad2)"}
           transform={`rotate(${deg} 60 60)`}
-          opacity=".85"
+          opacity={i % 2 === 0 ? "0.95" : "0.75"}
         />
       ))}
-      <circle cx="60" cy="60" r="13" fill="#7C3AED" />
-      <circle cx="60" cy="60" r="7" fill="#EDE9FE" />
+      <circle cx="60" cy="60" r="12" fill="#5a8a56" />
+      <circle cx="60" cy="60" r="6" fill="#f5f2ed" />
     </svg>
   );
 }
@@ -663,8 +801,6 @@ function IconLocation() {
       fill="none"
       stroke="currentColor"
       strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
     >
       <path d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
       <path d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 0 1 15 0Z" />
@@ -679,8 +815,6 @@ function IconPhone() {
       fill="none"
       stroke="currentColor"
       strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
     >
       <path d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
     </svg>
@@ -694,8 +828,6 @@ function IconMail() {
       fill="none"
       stroke="currentColor"
       strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
     >
       <path d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
     </svg>
@@ -709,8 +841,6 @@ function IconClock() {
       fill="none"
       stroke="currentColor"
       strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
     >
       <circle cx="12" cy="12" r="9.75" />
       <path d="M12 6.75V12l3.75 3.75" />
