@@ -1,149 +1,309 @@
-import { useState, useEffect, useRef } from 'react'
-import './App.css'
+import { useState, useEffect, useRef } from "react";
+import "./App.css";
 
 const SERVICES = [
   {
-    n: '01',
-    title: 'Erstgespräch & Anamnese',
-    desc: 'In einem ausführlichen Erstgespräch nehme ich mir die Zeit, Ihre Beschwerden, Lebensumstände und Persönlichkeit vollständig zu erfassen – die unverzichtbare Grundlage jeder homöopathischen Behandlung.',
-    duration: '90 Min.',
+    n: "01",
+    title: "Erstgespräch & Anamnese",
+    desc: "In einem ausführlichen Erstgespräch nehme ich mir die Zeit, Ihre Beschwerden, Lebensumstände und Persönlichkeit vollständig zu erfassen – die unverzichtbare Grundlage jeder homöopathischen Behandlung.",
+    duration: "90 Min.",
   },
   {
-    n: '02',
-    title: 'Klassische Homöopathie',
-    desc: 'Auf Basis der detaillierten Anamnese wähle ich das individuell passende Einzelmittel aus, das Ihre Selbstheilungskräfte gezielt anregt und eine nachhaltige Verbesserung bewirkt.',
-    duration: '60 Min.',
+    n: "02",
+    title: "Klassische Homöopathie",
+    desc: "Auf Basis der detaillierten Anamnese wähle ich das individuell passende Einzelmittel aus, das Ihre Selbstheilungskräfte gezielt anregt und eine nachhaltige Verbesserung bewirkt.",
+    duration: "60 Min.",
   },
   {
-    n: '03',
-    title: 'Kinderbehandlung',
-    desc: 'Sanfte und effektive homöopathische Begleitung für Kinder jeden Alters – von Neugeborenen bis hin zu Jugendlichen. Einfühlsam, spielerisch und ohne Nebenwirkungen.',
-    duration: '60 Min.',
+    n: "03",
+    title: "Kinderbehandlung",
+    desc: "Sanfte und effektive homöopathische Begleitung für Kinder jeden Alters – von Neugeborenen bis hin zu Jugendlichen. Einfühlsam, spielerisch und ohne Nebenwirkungen.",
+    duration: "60 Min.",
   },
   {
-    n: '04',
-    title: 'Chronische Erkrankungen',
-    desc: 'Langwierige Beschwerden brauchen Zeit und Geduld. Ich begleite Sie ganzheitlich und unterstütze Ihren Organismus dabei, das innere Gleichgewicht wiederzufinden.',
-    duration: '75 Min.',
+    n: "04",
+    title: "Chronische Erkrankungen",
+    desc: "Langwierige Beschwerden brauchen Zeit und Geduld. Ich begleite Sie ganzheitlich und unterstütze Ihren Organismus dabei, das innere Gleichgewicht wiederzufinden.",
+    duration: "75 Min.",
   },
   {
-    n: '05',
-    title: 'Schwangerschaft & Wochenbett',
-    desc: 'Sanfte homöopathische Begleitung durch Schwangerschaft, Geburtsvorbereitung und Wochenbettzeit – für Mutter und Kind sicher und natürlich abgestimmt.',
-    duration: '60 Min.',
+    n: "05",
+    title: "Schwangerschaft & Wochenbett",
+    desc: "Sanfte homöopathische Begleitung durch Schwangerschaft, Geburtsvorbereitung und Wochenbettzeit – für Mutter und Kind sicher und natürlich abgestimmt.",
+    duration: "60 Min.",
   },
   {
-    n: '06',
-    title: 'Online-Beratung',
-    desc: 'Homöopathische Konsultation bequem per Videogespräch von zu Hause aus – ideal für Folgetermine oder wenn ein persönlicher Besuch nicht möglich ist.',
-    duration: '45 Min.',
+    n: "06",
+    title: "Online-Beratung",
+    desc: "Homöopathische Konsultation bequem per Videogespräch von zu Hause aus – ideal für Folgetermine oder wenn ein persönlicher Besuch nicht möglich ist.",
+    duration: "45 Min.",
   },
-]
+];
+/* ============================================================
+   COMPONENTE RED DE PARTÍCULAS (CONEXIONES)
+   ============================================================ */
+const NetworkCanvas = () => {
+  const canvasRef = useRef(null);
 
-function useScrolled(threshold = 40) {
-  const [scrolled, setScrolled] = useState(false)
   useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > threshold)
-    window.addEventListener('scroll', fn, { passive: true })
-    return () => window.removeEventListener('scroll', fn)
-  }, [threshold])
-  return scrolled
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    let width, height;
+    let particles = [];
+
+    // Mouse interaction
+    let mouse = { x: null, y: null, radius: 150 };
+
+    const resize = () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = canvas.parentElement.offsetHeight;
+      initParticles();
+    };
+
+    class Particle {
+      constructor() {
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.vx = (Math.random() - 0.5) * 0.5; // Velocidad lenta
+        this.vy = (Math.random() - 0.5) * 0.5;
+        this.size = Math.random() * 2 + 1; // Tamaño del punto
+        // Color base violeta claro
+        this.baseColor = `rgba(196, 181, 253, ${Math.random() * 0.5 + 0.1})`;
+      }
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+
+        // Rebotar en bordes
+        if (this.x < 0 || this.x > width) this.vx *= -1;
+        if (this.y < 0 || this.y > height) this.vy *= -1;
+
+        // Interacción Mouse (Repulsión suave)
+        if (mouse.x != null) {
+          let dx = mouse.x - this.x;
+          let dy = mouse.y - this.y;
+          let distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance < mouse.radius) {
+            const forceDirectionX = dx / distance;
+            const forceDirectionY = dy / distance;
+            const force = (mouse.radius - distance) / mouse.radius;
+            const directionX = forceDirectionX * force * 2;
+            const directionY = forceDirectionY * force * 2;
+            this.x -= directionX;
+            this.y -= directionY;
+          }
+        }
+      }
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = this.baseColor;
+        ctx.fill();
+      }
+    }
+
+    const initParticles = () => {
+      particles = [];
+      // Número de nodos: menos partículas para que las líneas se vean mejor
+      const particleCount = Math.min(Math.floor(window.innerWidth / 12), 90);
+      for (let i = 0; i < particleCount; i++) {
+        particles.push(new Particle());
+      }
+    };
+
+    // --- AQUÍ ESTÁ LA MAGIA DE LAS CONEXIONES ---
+    const connect = () => {
+      let opacityValue = 1;
+      for (let a = 0; a < particles.length; a++) {
+        for (let b = a; b < particles.length; b++) {
+          // Calcular distancia entre punto A y punto B
+          let dx = particles[a].x - particles[b].x;
+          let dy = particles[a].y - particles[b].y;
+          let distance = dx * dx + dy * dy;
+
+          // Si están cerca (distancia al cuadrado menor que el umbral)
+          // Ajusta el número 15000 para cambiar la distancia máxima de conexión
+          if (distance < (width / 7) * (height / 7)) {
+            opacityValue = 1 - distance / 20000;
+            if (opacityValue > 0) {
+              ctx.strokeStyle = `rgba(196, 181, 253, ${opacityValue * 0.4})`; // Color línea lavanda
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(particles[a].x, particles[a].y);
+              ctx.lineTo(particles[b].x, particles[b].y);
+              ctx.stroke();
+            }
+          }
+        }
+      }
+    };
+
+    const animate = () => {
+      requestAnimationFrame(animate);
+      ctx.clearRect(0, 0, width, height);
+
+      particles.forEach((particle) => {
+        particle.update();
+        particle.draw();
+      });
+
+      connect(); // Dibujar las líneas
+    };
+
+    window.addEventListener("resize", resize);
+    window.addEventListener("mousemove", (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY + window.scrollY;
+    });
+    window.addEventListener("mouseout", () => {
+      mouse.x = null;
+      mouse.y = null;
+    });
+
+    setTimeout(() => {
+      resize();
+      animate();
+    }, 100);
+
+    return () => window.removeEventListener("resize", resize);
+  }, []);
+
+  return <canvas ref={canvasRef} className="hero__canvas" />;
+};
+function useScrolled(threshold = 40) {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const fn = () => setScrolled(window.scrollY > threshold);
+    window.addEventListener("scroll", fn, { passive: true });
+    return () => window.removeEventListener("scroll", fn);
+  }, [threshold]);
+  return scrolled;
 }
 
 function useReveal() {
-  const ref = useRef(null)
-  const [visible, setVisible] = useState(false)
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
   useEffect(() => {
-    const el = ref.current
-    if (!el) return
+    const el = ref.current;
+    if (!el) return;
     const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect() } },
-      { threshold: 0.12 }
-    )
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [])
-  return [ref, visible]
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          obs.disconnect();
+        }
+      },
+      { threshold: 0.12 },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return [ref, visible];
 }
 
 function RevealSection({ className, children, id }) {
-  const [ref, visible] = useReveal()
+  const [ref, visible] = useReveal();
   return (
-    <section ref={ref} id={id} className={`${className} ${visible ? 'is-visible' : ''}`}>
+    <section
+      ref={ref}
+      id={id}
+      className={`${className} ${visible ? "is-visible" : ""}`}
+    >
       {children}
     </section>
-  )
+  );
 }
 
 export default function App() {
-  const scrolled = useScrolled()
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [form, setForm] = useState({ name: '', email: '', phone: '', anliegen: '', message: '' })
-  const [sent, setSent] = useState(false)
+  const scrolled = useScrolled();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    anliegen: "",
+    message: "",
+  });
+  const [sent, setSent] = useState(false);
 
-  const closeMenu = () => setMenuOpen(false)
-  const onChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }))
-  const onSubmit = e => { e.preventDefault(); setSent(true) }
+  const closeMenu = () => setMenuOpen(false);
+  const onChange = (e) =>
+    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+  const onSubmit = (e) => {
+    e.preventDefault();
+    setSent(true);
+  };
 
   return (
     <div className="app">
-
       {/* ── NAV ── */}
-      <nav className={`nav${scrolled ? ' nav--scrolled' : ''}`}>
+      <nav className={`nav${scrolled ? " nav--scrolled" : ""}`}>
         <a href="#hero" className="nav__logo" onClick={closeMenu}>
           <span>Britta Piesbergen</span>
           <small>Homöopathie</small>
         </a>
 
         <button
-          className={`nav__burger${menuOpen ? ' nav__burger--open' : ''}`}
-          onClick={() => setMenuOpen(o => !o)}
+          className={`nav__burger${menuOpen ? " nav__burger--open" : ""}`}
+          onClick={() => setMenuOpen((o) => !o)}
           aria-label="Menü öffnen"
         >
-          <span /><span /><span />
+          <span />
+          <span />
+          <span />
         </button>
 
-        <ul className={`nav__links${menuOpen ? ' nav__links--open' : ''}`}>
-          {[['#ueber-mich', 'Über mich'], ['#leistungen', 'Leistungen'], ['#kontakt', 'Kontakt']].map(([href, label]) => (
-            <li key={href}><a href={href} onClick={closeMenu}>{label}</a></li>
+        <ul className={`nav__links${menuOpen ? " nav__links--open" : ""}`}>
+          {[
+            ["#ueber-mich", "Über mich"],
+            ["#leistungen", "Leistungen"],
+            ["#kontakt", "Kontakt"],
+          ].map(([href, label]) => (
+            <li key={href}>
+              <a href={href} onClick={closeMenu}>
+                {label}
+              </a>
+            </li>
           ))}
-          <li><a href="#kontakt" className="nav__cta" onClick={closeMenu}>Termin anfragen</a></li>
+          <li>
+            <a href="#kontakt" className="nav__cta" onClick={closeMenu}>
+              Termin anfragen
+            </a>
+          </li>
         </ul>
       </nav>
 
       {/* ── HERO ── */}
       <section className="hero" id="hero">
+        <div className="hero__canvas-container">
+          <NetworkCanvas />
+        </div>
         <div className="hero__bg" aria-hidden="true">
           <div className="blob blob--1" />
           <div className="blob blob--2" />
           <div className="blob blob--3" />
-          {Array.from({ length: 9 }, (_, i) => (
-            <div
-              key={i}
-              className="petal"
-              style={{
-                '--rot': `${i * 40}deg`,
-                '--delay': `${i * 0.7}s`,
-                '--size': `${8 + (i % 3) * 4}px`,
-              }}
-            />
-          ))}
         </div>
 
         <div className="hero__inner container">
           <div className="hero__text">
-            <span className="eyebrow">Homöopathische Praxis · Hamburg</span>
+            <span className="eyebrow">Homöopathische Praxis · Koblenz</span>
             <h1>
-              Natürliche Heilung<br />
+              Natürliche Heilung
+              <br />
               <em>beginnt von innen</em>
             </h1>
             <p>
-              Ich begleite Sie auf Ihrem Weg zu einem gesunden und harmonischen Leben —
-              einfühlsam, ganzheitlich und individuell auf Sie abgestimmt.
+              Ich begleite Sie auf Ihrem Weg zu einem gesunden und harmonischen
+              Leben — einfühlsam, ganzheitlich und individuell auf Sie
+              abgestimmt.
             </p>
             <div className="hero__actions">
-              <a href="#kontakt" className="btn btn--primary">Termin vereinbaren</a>
-              <a href="#ueber-mich" className="btn btn--ghost">Über mich</a>
+              <a href="#kontakt" className="btn btn--primary">
+                Termin vereinbaren
+              </a>
+              <a href="#ueber-mich" className="btn btn--ghost">
+                Über mich
+              </a>
             </div>
           </div>
 
@@ -151,15 +311,30 @@ export default function App() {
             <div className="hero__ring hero__ring--outer" />
             <div className="hero__ring hero__ring--inner" />
             <div className="photo-frame">
-              <svg className="photo-frame__silhouette" viewBox="0 0 200 240" fill="none">
+              <svg
+                className="photo-frame__silhouette"
+                viewBox="0 0 200 240"
+                fill="none"
+              >
                 <circle cx="100" cy="82" r="46" fill="#C4B5FD" opacity=".7" />
-                <ellipse cx="100" cy="200" rx="68" ry="52" fill="#C4B5FD" opacity=".7" />
+                <ellipse
+                  cx="100"
+                  cy="200"
+                  rx="68"
+                  ry="52"
+                  fill="#C4B5FD"
+                  opacity=".7"
+                />
               </svg>
               <span className="photo-frame__label">Foto folgt</span>
             </div>
             <div className="hero__badge">
-              <span className="badge__n">15+</span>
-              <span className="badge__label">Jahre<br />Erfahrung</span>
+              <span className="badge__n">30+</span>
+              <span className="badge__label">
+                Jahre
+                <br />
+                Erfahrung
+              </span>
             </div>
             <div className="hero__jacaranda" aria-hidden="true">
               <JacarandaFlower />
@@ -181,7 +356,14 @@ export default function App() {
               <div className="about__photo">
                 <svg viewBox="0 0 200 240" fill="none">
                   <circle cx="100" cy="82" r="50" fill="#DDD6FE" opacity=".8" />
-                  <ellipse cx="100" cy="205" rx="74" ry="54" fill="#DDD6FE" opacity=".8" />
+                  <ellipse
+                    cx="100"
+                    cy="205"
+                    rx="74"
+                    ry="54"
+                    fill="#DDD6FE"
+                    opacity=".8"
+                  />
                 </svg>
                 <span>Foto folgt</span>
               </div>
@@ -189,8 +371,8 @@ export default function App() {
               <div className="about__deco-dot" />
             </div>
             <blockquote className="about__quote">
-              „Die Homöopathie sieht den Menschen als Ganzes —
-              Körper, Geist und Seele sind untrennbar verbunden."
+              „Die Homöopathie sieht den Menschen als Ganzes — Körper, Geist und
+              Seele sind untrennbar verbunden."
             </blockquote>
           </div>
 
@@ -198,23 +380,24 @@ export default function App() {
             <span className="eyebrow">Über mich</span>
             <h2>Herzlich willkommen in meiner Praxis</h2>
             <p>
-              Mein Name ist Britta Piesbergen, und ich bin klassische Homöopathin mit über
-              15 Jahren Erfahrung in der ganzheitlichen Gesundheitsbegleitung. Meine Überzeugung
-              ist es, dass wahre Heilung nur dann geschehen kann, wenn der Mensch als Einheit
+              Mein Name ist Britta Piesbergen, und ich bin klassische
+              Homöopathin mit über 15 Jahren Erfahrung in der ganzheitlichen
+              Gesundheitsbegleitung. Meine Überzeugung ist es, dass wahre
+              Heilung nur dann geschehen kann, wenn der Mensch als Einheit
               betrachtet wird — nicht nur seine Symptome.
             </p>
             <p>
-              Nach meiner Ausbildung zur Heilpraktikerin spezialisierte ich mich auf die
-              klassische Homöopathie nach Samuel Hahnemann. Seitdem begleite ich Menschen
-              aller Altersgruppen — von Säuglingen bis ins hohe Alter — auf ihrem ganz
-              persönlichen Heilungsweg. Jeder Mensch ist einzigartig, und so ist auch
-              jede Behandlung in meiner Praxis.
+              Nach meiner Ausbildung zur Heilpraktikerin spezialisierte ich mich
+              auf die klassische Homöopathie nach Samuel Hahnemann. Seitdem
+              begleite ich Menschen aller Altersgruppen — von Säuglingen bis ins
+              hohe Alter — auf ihrem ganz persönlichen Heilungsweg. Jeder Mensch
+              ist einzigartig, und so ist auch jede Behandlung in meiner Praxis.
             </p>
             <div className="credentials">
               {[
-                ['Heilpraktikerin', 'Staatlich geprüft & zugelassen'],
-                ['Klassische Homöopathin', 'Nach Samuel Hahnemann'],
-                ['Mitglied DZVhÄ & DHU', 'Deutsche Homöopathie-Verbände'],
+                ["Heilpraktikerin", "Staatlich geprüft & zugelassen"],
+                ["Klassische Homöopathin", "Nach Samuel Hahnemann"],
+                ["Mitglied DZVhÄ & DHU", "Deutsche Homöopathie-Verbände"],
               ].map(([title, sub]) => (
                 <div className="credential" key={title}>
                   <div className="credential__dot" />
@@ -257,7 +440,8 @@ export default function App() {
             ))}
           </div>
           <p className="services__note">
-            Preise auf Anfrage. Homöopathische Behandlungen können je nach Krankenkasse anteilig erstattet werden.
+            Preise auf Anfrage. Homöopathische Behandlungen können je nach
+            Krankenkasse anteilig erstattet werden.
           </p>
         </div>
       </RevealSection>
@@ -266,7 +450,6 @@ export default function App() {
       <RevealSection className="contact reveal-section" id="kontakt">
         <div className="contact__glow" aria-hidden="true" />
         <div className="container contact__inner">
-
           <div className="contact__info">
             <span className="eyebrow eyebrow--light">Kontakt</span>
             <h2>Vereinbaren Sie Ihren Termin</h2>
@@ -278,23 +461,35 @@ export default function App() {
               {[
                 {
                   icon: <IconLocation />,
-                  label: 'Praxisadresse',
-                  value: <>Eppendorfer Weg 42<br />20259 Hamburg</>,
+                  label: "Praxisadresse",
+                  value: (
+                    <>
+                      Eppendorfer Weg 42
+                      <br />
+                      20259 Hamburg
+                    </>
+                  ),
                 },
                 {
                   icon: <IconPhone />,
-                  label: 'Telefon',
-                  value: '+49 40 123 456 78',
+                  label: "Telefon",
+                  value: "+49 40 123 456 78",
                 },
                 {
                   icon: <IconMail />,
-                  label: 'E-Mail',
-                  value: 'praxis@britta-piesbergen.de',
+                  label: "E-Mail",
+                  value: "praxis@britta-piesbergen.de",
                 },
                 {
                   icon: <IconClock />,
-                  label: 'Sprechzeiten',
-                  value: <>Mo, Mi, Fr: 9 – 17 Uhr<br />Di, Do: 12 – 19 Uhr</>,
+                  label: "Sprechzeiten",
+                  value: (
+                    <>
+                      Mo, Mi, Fr: 9 – 17 Uhr
+                      <br />
+                      Di, Do: 12 – 19 Uhr
+                    </>
+                  ),
                 },
               ].map(({ icon, label, value }) => (
                 <div className="contact__detail" key={label}>
@@ -311,24 +506,66 @@ export default function App() {
           <div className="contact__form-wrap">
             {sent ? (
               <div className="form-success">
-                <div className="form-success__flower"><JacarandaFlower /></div>
+                <div className="form-success__flower">
+                  <JacarandaFlower />
+                </div>
                 <h3>Vielen Dank!</h3>
-                <p>Ihre Nachricht ist angekommen. Ich melde mich in Kürze bei Ihnen.</p>
+                <p>
+                  Ihre Nachricht ist angekommen. Ich melde mich in Kürze bei
+                  Ihnen.
+                </p>
               </div>
             ) : (
               <form className="contact__form" onSubmit={onSubmit} noValidate>
                 <h3>Nachricht senden</h3>
                 <div className="form-row">
-                  <Field label="Name *" id="name" name="name" type="text" placeholder="Ihr vollständiger Name" required value={form.name} onChange={onChange} />
-                  <Field label="E-Mail *" id="email" name="email" type="email" placeholder="ihre@email.de" required value={form.email} onChange={onChange} />
+                  <Field
+                    label="Name *"
+                    id="name"
+                    name="name"
+                    type="text"
+                    placeholder="Ihr vollständiger Name"
+                    required
+                    value={form.name}
+                    onChange={onChange}
+                  />
+                  <Field
+                    label="E-Mail *"
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="ihre@email.de"
+                    required
+                    value={form.email}
+                    onChange={onChange}
+                  />
                 </div>
                 <div className="form-row">
-                  <Field label="Telefon" id="phone" name="phone" type="tel" placeholder="+49 40 …" value={form.phone} onChange={onChange} />
+                  <Field
+                    label="Telefon"
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    placeholder="+49 40 …"
+                    value={form.phone}
+                    onChange={onChange}
+                  />
                   <div className="form-group">
                     <label htmlFor="anliegen">Anliegen</label>
-                    <select id="anliegen" name="anliegen" value={form.anliegen} onChange={onChange}>
+                    <select
+                      id="anliegen"
+                      name="anliegen"
+                      value={form.anliegen}
+                      onChange={onChange}
+                    >
                       <option value="">Bitte wählen …</option>
-                      {['Erstgespräch', 'Folgetermin', 'Kinderbehandlung', 'Online-Beratung', 'Allgemeine Anfrage'].map(o => (
+                      {[
+                        "Erstgespräch",
+                        "Folgetermin",
+                        "Kinderbehandlung",
+                        "Online-Beratung",
+                        "Allgemeine Anfrage",
+                      ].map((o) => (
                         <option key={o}>{o}</option>
                       ))}
                     </select>
@@ -336,12 +573,22 @@ export default function App() {
                 </div>
                 <div className="form-group">
                   <label htmlFor="message">Nachricht *</label>
-                  <textarea id="message" name="message" rows={5} required placeholder="Beschreiben Sie kurz Ihr Anliegen …" value={form.message} onChange={onChange} />
+                  <textarea
+                    id="message"
+                    name="message"
+                    rows={5}
+                    required
+                    placeholder="Beschreiben Sie kurz Ihr Anliegen …"
+                    value={form.message}
+                    onChange={onChange}
+                  />
                 </div>
                 <button type="submit" className="btn btn--primary btn--full">
                   Nachricht absenden
                 </button>
-                <p className="form-note">* Pflichtfelder · Ihre Daten werden vertraulich behandelt.</p>
+                <p className="form-note">
+                  * Pflichtfelder · Ihre Daten werden vertraulich behandelt.
+                </p>
               </form>
             )}
           </div>
@@ -356,15 +603,25 @@ export default function App() {
             <small>Homöopathische Praxis · Hamburg</small>
           </div>
           <nav className="footer__nav" aria-label="Footer-Navigation">
-            {[['#ueber-mich', 'Über mich'], ['#leistungen', 'Leistungen'], ['#kontakt', 'Kontakt'], ['#', 'Impressum'], ['#', 'Datenschutz']].map(([href, label]) => (
-              <a key={label} href={href}>{label}</a>
+            {[
+              ["#ueber-mich", "Über mich"],
+              ["#leistungen", "Leistungen"],
+              ["#kontakt", "Kontakt"],
+              ["#", "Impressum"],
+              ["#", "Datenschutz"],
+            ].map(([href, label]) => (
+              <a key={label} href={href}>
+                {label}
+              </a>
             ))}
           </nav>
-          <p className="footer__copy">© 2025 Britta Piesbergen · Alle Rechte vorbehalten</p>
+          <p className="footer__copy">
+            © 2025 Britta Piesbergen · Alle Rechte vorbehalten
+          </p>
         </div>
       </footer>
     </div>
-  )
+  );
 }
 
 /* ── Small sub-components ── */
@@ -375,7 +632,7 @@ function Field({ label, id, ...props }) {
       <label htmlFor={id}>{label}</label>
       <input id={id} {...props} />
     </div>
-  )
+  );
 }
 
 function JacarandaFlower() {
@@ -384,8 +641,11 @@ function JacarandaFlower() {
       {[0, 60, 120, 180, 240, 300].map((deg, i) => (
         <ellipse
           key={deg}
-          cx="60" cy="28" rx="11" ry="24"
-          fill={i % 2 === 0 ? '#C4B5FD' : '#A78BFA'}
+          cx="60"
+          cy="28"
+          rx="11"
+          ry="24"
+          fill={i % 2 === 0 ? "#C4B5FD" : "#A78BFA"}
           transform={`rotate(${deg} 60 60)`}
           opacity=".85"
         />
@@ -393,39 +653,67 @@ function JacarandaFlower() {
       <circle cx="60" cy="60" r="13" fill="#7C3AED" />
       <circle cx="60" cy="60" r="7" fill="#EDE9FE" />
     </svg>
-  )
+  );
 }
 
 function IconLocation() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
       <path d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 0 1 15 0Z" />
     </svg>
-  )
+  );
 }
 
 function IconPhone() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
     </svg>
-  )
+  );
 }
 
 function IconMail() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
     </svg>
-  )
+  );
 }
 
 function IconClock() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <circle cx="12" cy="12" r="9.75" />
       <path d="M12 6.75V12l3.75 3.75" />
     </svg>
-  )
+  );
 }
