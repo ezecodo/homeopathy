@@ -51,9 +51,18 @@ const NetworkCanvas = () => {
     let animationId;
     let mouse = { x: null, y: null, radius: 120 };
 
+    // Paleta de Jacarandá: Tonos violeta, lila y un toque de azul lavanda
+    const jacarandaPalette = [
+      "158, 119, 237", // Violeta principal
+      "182, 155, 243", // Lila claro
+      "124, 93, 224", // Violeta profundo
+      "195, 178, 255", // Lavanda suave
+    ];
+
     const resize = () => {
+      const parent = canvas.parentElement;
       width = canvas.width = window.innerWidth;
-      height = canvas.height = canvas.parentElement.offsetHeight;
+      height = canvas.height = parent.offsetHeight;
       initParticles();
     };
 
@@ -64,8 +73,12 @@ const NetworkCanvas = () => {
         this.vx = (Math.random() - 0.5) * 0.3;
         this.vy = (Math.random() - 0.5) * 0.3;
         this.size = Math.random() * 2 + 1.5;
-        this.baseColor = `rgba(139, 168, 134, ${Math.random() * 0.3 + 0.2})`;
+        // Seleccionamos un color aleatorio de la paleta de jacarandá
+        this.colorRGB =
+          jacarandaPalette[Math.floor(Math.random() * jacarandaPalette.length)];
+        this.opacity = Math.random() * 0.5 + 0.3;
       }
+
       update() {
         this.x += this.vx;
         this.y += this.vy;
@@ -81,17 +94,16 @@ const NetworkCanvas = () => {
             const forceDirectionX = dx / distance;
             const forceDirectionY = dy / distance;
             const force = (mouse.radius - distance) / mouse.radius;
-            const directionX = forceDirectionX * force * 1.5;
-            const directionY = forceDirectionY * force * 1.5;
-            this.x -= directionX;
-            this.y -= directionY;
+            this.x -= forceDirectionX * force * 1.5;
+            this.y -= forceDirectionY * force * 1.5;
           }
         }
       }
+
       draw() {
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fillStyle = this.baseColor;
+        ctx.fillStyle = `rgba(${this.colorRGB}, ${this.opacity})`;
         ctx.fill();
       }
     }
@@ -111,10 +123,11 @@ const NetworkCanvas = () => {
           let dy = particles[a].y - particles[b].y;
           let distance = dx * dx + dy * dy;
 
-          if (distance < 12000) {
-            let opacityValue = 1 - distance / 12000;
-            ctx.lineWidth = 1;
-            ctx.strokeStyle = `rgba(139, 168, 134, ${opacityValue * 0.25})`;
+          if (distance < 15000) {
+            let opacityValue = 1 - distance / 15000;
+            ctx.lineWidth = 0.8;
+            // Usamos el color de la primera partícula para la línea, pero con menos opacidad
+            ctx.strokeStyle = `rgba(${particles[a].colorRGB}, ${opacityValue * 0.2})`;
             ctx.beginPath();
             ctx.moveTo(particles[a].x, particles[a].y);
             ctx.lineTo(particles[b].x, particles[b].y);
@@ -135,8 +148,10 @@ const NetworkCanvas = () => {
     };
 
     const handleMouseMove = (e) => {
-      mouse.x = e.clientX;
-      mouse.y = e.clientY + window.scrollY;
+      // Ajuste para scroll si el canvas no es fixed
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = e.clientX - rect.left;
+      mouse.y = e.clientY - rect.top;
     };
 
     const handleMouseOut = () => {
@@ -159,7 +174,13 @@ const NetworkCanvas = () => {
     };
   }, []);
 
-  return <canvas ref={canvasRef} className="hero__canvas" />;
+  return (
+    <canvas
+      ref={canvasRef}
+      className="hero__canvas"
+      style={{ display: "block" }}
+    />
+  );
 };
 
 const GlobulesCanvas = () => {
@@ -390,16 +411,20 @@ export default function App() {
             <div className="hero__main-flower">
               <JacarandaFlower />
             </div>
-
-            <div className="hero__badge">
-              <span className="badge__n">15+</span>
-              <span className="badge__label">
-                Jahre
-                <br />
-                Erfahrung
-              </span>
-            </div>
           </div>
+        </div>
+
+        <div className="hero__stats" aria-label="Kurzübersicht">
+          {[
+            { n: "15+", label: "Jahre Erfahrung" },
+            { n: "Klassisch", label: "Homöopathie" },
+            { n: "DHU", label: "Mitglied" },
+          ].map(({ n, label }, i) => (
+            <div className="hero__stat" key={i}>
+              <span className="hero__stat-n">{n}</span>
+              <span className="hero__stat-label">{label}</span>
+            </div>
+          ))}
         </div>
 
         <div className="hero__scroll" aria-hidden="true">
@@ -423,8 +448,8 @@ export default function App() {
                       x2="100%"
                       y2="100%"
                     >
-                      <stop offset="0%" stopColor="#d4e4d1" />
-                      <stop offset="100%" stopColor="#b8d4b4" />
+                      <stop offset="0%" stopColor="#ddd6fe" />
+                      <stop offset="100%" stopColor="#c4b5fd" />
                     </linearGradient>
                   </defs>
                   <circle
@@ -768,27 +793,30 @@ function JacarandaFlower() {
     >
       <defs>
         <linearGradient id="petalGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#a8c5a4" />
-          <stop offset="100%" stopColor="#8ba886" />
+          <stop offset="0%" stopColor="#a78bfa" />
+          <stop offset="100%" stopColor="#8b5cf6" />
         </linearGradient>
         <linearGradient id="petalGrad2" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#96b892" />
-          <stop offset="100%" stopColor="#7aa076" />
+          <stop offset="0%" stopColor="#7c3aed" />
+          <stop offset="100%" stopColor="#6d28d9" />
         </linearGradient>
       </defs>
-      {[0, 60, 120, 180, 240, 300].map((deg, i) => (
-        <ellipse
-          key={deg}
-          cx="60"
-          cy="28"
-          rx="10"
-          ry="22"
-          fill={i % 2 === 0 ? "url(#petalGrad)" : "url(#petalGrad2)"}
-          transform={`rotate(${deg} 60 60)`}
-          opacity={i % 2 === 0 ? "0.95" : "0.75"}
-        />
-      ))}
-      <circle cx="60" cy="60" r="12" fill="#5a8a56" />
+      <g className="flower-spin">
+        {[0, 60, 120, 180, 240, 300].map((deg, i) => (
+          <g key={deg} transform={`rotate(${deg} 60 60)`}>
+            <ellipse
+              className={`flower-petal fp${i}`}
+              cx="60"
+              cy="28"
+              rx="10"
+              ry="22"
+              fill={i % 2 === 0 ? "url(#petalGrad)" : "url(#petalGrad2)"}
+              opacity={i % 2 === 0 ? "0.95" : "0.75"}
+            />
+          </g>
+        ))}
+      </g>
+      <circle cx="60" cy="60" r="12" fill="#4c1d95" />
       <circle cx="60" cy="60" r="6" fill="#f5f2ed" />
     </svg>
   );

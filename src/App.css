@@ -2,17 +2,17 @@
    TOKENS - Nueva paleta orgánica y sofisticada
    ============================================================ */
 :root {
-  /* Colores principales - Sage Green & Warm Cream */
-  --sage-900: #2d4a3e;
-  --sage-800: #3d6354;
-  --sage-700: #4a7c6f;
-  --sage-600: #5a8a56;
-  --sage-500: #7aa076;
-  --sage-400: #8ba886;
-  --sage-300: #a8c5a4;
-  --sage-200: #c5d9c2;
-  --sage-100: #e8f0e6;
-  --sage-50: #f5f8f4;
+  /* Colores principales - Electric Jacaranda */
+  --sage-900: #1e0a3c;
+  --sage-800: #2d1b69;
+  --sage-700: #4c1d95;
+  --sage-600: #6d28d9;
+  --sage-500: #7c3aed;
+  --sage-400: #8b5cf6;
+  --sage-300: #a78bfa;
+  --sage-200: #c4b5fd;
+  --sage-100: #ede9fe;
+  --sage-50: #f5f3ff;
 
   /* Neutros cálidos */
   --cream-900: #1a1814;
@@ -181,12 +181,12 @@ h2 {
 .btn--primary {
   background: var(--sage-700);
   color: white;
-  box-shadow: 0 4px 20px rgba(74, 124, 111, 0.25);
+  box-shadow: 0 4px 20px rgba(109, 40, 217, 0.25);
 }
 
 .btn--primary:hover {
   background: var(--sage-800);
-  box-shadow: 0 8px 30px rgba(74, 124, 111, 0.35);
+  box-shadow: 0 8px 30px rgba(109, 40, 217, 0.35);
   transform: translateY(-2px);
 }
 
@@ -330,7 +330,7 @@ h2 {
   border-radius: 100px;
   font-size: 0.85rem !important;
   font-weight: 600 !important;
-  box-shadow: 0 4px 15px rgba(74, 124, 111, 0.2);
+  box-shadow: 0 4px 15px rgba(109, 40, 217, 0.2);
   transition: all 0.3s var(--ease-out) !important;
 }
 
@@ -341,7 +341,7 @@ h2 {
 .nav__cta:hover {
   background: var(--sage-800) !important;
   transform: translateY(-2px) !important;
-  box-shadow: 0 6px 20px rgba(74, 124, 111, 0.3) !important;
+  box-shadow: 0 6px 20px rgba(109, 40, 217, 0.3) !important;
 }
 
 /* Hamburger mejorado */
@@ -545,7 +545,7 @@ h2 {
   width: 280px;
   height: 280px;
   z-index: 2;
-  filter: drop-shadow(0 20px 40px rgba(90, 138, 86, 0.2));
+  filter: drop-shadow(0 20px 40px rgba(124, 58, 237, 0.2));
   animation: float-flower 6s ease-in-out infinite;
 }
 
@@ -565,45 +565,83 @@ h2 {
   }
 }
 
-.hero__badge {
+.flower-spin {
+  transform-origin: 60px 60px;
+  animation: flower-spin 22s linear infinite;
+}
+
+@keyframes flower-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.flower-petal {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: petal-pulse 3.5s ease-in-out infinite;
+}
+
+.fp0 { animation-delay: 0s; }
+.fp1 { animation-delay: 0.58s; }
+.fp2 { animation-delay: 1.17s; }
+.fp3 { animation-delay: 1.75s; }
+.fp4 { animation-delay: 2.33s; }
+.fp5 { animation-delay: 2.92s; }
+
+@keyframes petal-pulse {
+  0%, 100% { transform: scaleY(1) scaleX(1); }
+  50% { transform: scaleY(1.1) scaleX(0.9); }
+}
+
+.hero__stats {
   position: absolute;
-  bottom: 60px;
-  left: 0;
-  background: white;
-  border-radius: var(--r-lg);
-  padding: 20px 24px;
+  bottom: 150px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 12px;
-  box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.08),
-    0 1px 3px rgba(0, 0, 0, 0.05);
-  animation: float-badge 5s ease-in-out infinite;
+  gap: 0;
+  z-index: 2;
+  white-space: nowrap;
 }
 
-@keyframes float-badge {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
+.hero__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 0 40px;
+  position: relative;
 }
 
-.badge__n {
+.hero__stat + .hero__stat::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 32px;
+  background: var(--sage-200);
+  opacity: 0.5;
+}
+
+.hero__stat-n {
   font-family: var(--ff-display);
-  font-size: 2.2rem;
+  font-size: 1.6rem;
   font-weight: 600;
-  color: var(--sage-700);
+  color: var(--sage-600);
   line-height: 1;
+  letter-spacing: -0.02em;
 }
 
-.badge__label {
-  font-size: 0.75rem;
-  color: var(--cream-600);
-  line-height: 1.4;
+.hero__stat-label {
+  font-size: 0.72rem;
   font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cream-500);
 }
 
 /* Scroll indicator mejorado */
@@ -707,8 +745,8 @@ h2 {
   justify-content: center;
   gap: 12px;
   box-shadow:
-    0 30px 60px rgba(74, 124, 111, 0.15),
-    0 10px 20px rgba(74, 124, 111, 0.1);
+    0 30px 60px rgba(109, 40, 217, 0.15),
+    0 10px 20px rgba(109, 40, 217, 0.1);
   transition: transform 0.5s var(--ease-out);
 }
 
@@ -924,7 +962,7 @@ h2 {
   transform: translateY(-8px);
   box-shadow:
     0 20px 40px rgba(0, 0, 0, 0.08),
-    0 0 0 1px rgba(74, 124, 111, 0.1);
+    0 0 0 1px rgba(109, 40, 217, 0.1);
 }
 
 .service-card:hover::before {
@@ -1001,8 +1039,8 @@ h2 {
   background: linear-gradient(
     135deg,
     var(--cream-900) 0%,
-    #1a2f28 50%,
-    #0f1a17 100%
+    #1c0940 50%,
+    #0a0420 100%
   );
   padding-block: 140px;
   position: relative;
@@ -1015,7 +1053,7 @@ h2 {
   background:
     radial-gradient(
       ellipse 50% 50% at 80% 20%,
-      rgba(90, 138, 86, 0.15) 0%,
+      rgba(124, 58, 237, 0.15) 0%,
       transparent 60%
     ),
     radial-gradient(
@@ -1080,7 +1118,7 @@ h2 {
 }
 
 .contact__detail:hover .contact__detail-icon {
-  background: rgba(90, 138, 86, 0.2);
+  background: rgba(124, 58, 237, 0.2);
   border-color: var(--sage-600);
   color: var(--sage-300);
 }
@@ -1175,7 +1213,7 @@ h2 {
 .form-group.is-focused textarea {
   border-color: var(--sage-500);
   background: white;
-  box-shadow: 0 0 0 4px rgba(90, 138, 86, 0.1);
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
 }
 
 .form-group.is-focused label {
@@ -1242,7 +1280,7 @@ h2 {
    FOOTER - Mejorado con mejor jerarquía
    ============================================================ */
 .footer {
-  background: #0a0f0e;
+  background: #0d0520;
   padding-block: 60px;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
@@ -1346,7 +1384,7 @@ h2 {
 }
 
 /* ============================================================
-   RESPONSIVE - Mejorado
+   RESPONSIVE
    ============================================================ */
 @media (max-width: 1024px) {
   .nav__container {
@@ -1372,9 +1410,10 @@ h2 {
 
 @media (max-width: 768px) {
   :root {
-    --nav-h: 70px;
+    --nav-h: 64px;
   }
 
+  /* ── Nav ── */
   .nav__burger {
     display: flex;
   }
@@ -1382,18 +1421,20 @@ h2 {
   .nav__links {
     display: none;
     position: fixed;
-    top: var(--nav-h);
+    top: 0;
     left: 0;
     right: 0;
     bottom: 0;
     background: rgba(253, 252, 249, 0.98);
     backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 40px 24px;
+    padding: var(--nav-h) 24px 40px;
     z-index: 999;
+    overflow-y: auto;
   }
 
   .nav__links--open {
@@ -1416,11 +1457,18 @@ h2 {
     display: inline-flex !important;
   }
 
+  /* ── Hero ── */
+  /* Let content flow naturally instead of centering into absolute elements */
+  .hero {
+    justify-content: flex-start;
+    padding-bottom: 48px;
+  }
+
   .hero__inner {
     grid-template-columns: 1fr;
     text-align: center;
-    gap: 48px;
-    padding-block: 40px 80px;
+    gap: 32px;
+    padding-block: 32px 28px;
   }
 
   .hero__title-accent::after {
@@ -1430,41 +1478,74 @@ h2 {
 
   .hero__subtitle {
     margin-inline: auto;
+    font-size: 1rem;
   }
 
   .hero__actions {
     justify-content: center;
+    gap: 12px;
   }
 
   .hero__visual {
-    height: 350px;
+    height: 260px;
     order: -1;
   }
 
   .hero__main-flower {
-    width: 220px;
-    height: 220px;
+    width: 180px;
+    height: 180px;
   }
 
   .hero__ring--outer {
-    width: 300px;
-    height: 300px;
-  }
-
-  .hero__ring--inner {
     width: 240px;
     height: 240px;
   }
 
-  .hero__badge {
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: 20px;
+  .hero__ring--inner {
+    width: 190px;
+    height: 190px;
   }
 
+  /* Stats become part of normal flow — no more absolute positioning */
+  .hero__stats {
+    position: static;
+    transform: none;
+    justify-content: center;
+    padding: 20px 24px 0;
+    border-top: 1px solid var(--sage-100);
+    margin-inline: 24px;
+  }
+
+  .hero__stat {
+    padding: 0 16px;
+  }
+
+  .hero__stat-n {
+    font-size: 1.2rem;
+  }
+
+  /* Hide scroll indicator — too cramped on mobile */
+  .hero__scroll {
+    display: none;
+  }
+
+  /* ── Sections — reduce oversized padding ── */
+  .about {
+    padding-block: 80px;
+  }
+
+  .services {
+    padding-block: 80px;
+  }
+
+  .contact {
+    padding-block: 80px;
+  }
+
+  /* ── About ── */
   .about__inner {
     grid-template-columns: 1fr;
-    gap: 48px;
+    gap: 40px;
   }
 
   .about__visual-col {
@@ -1473,32 +1554,83 @@ h2 {
   }
 
   .about__photo {
-    max-width: 320px;
+    max-width: 280px;
   }
 
+  .about__quote {
+    font-size: 1.05rem;
+  }
+
+  .credentials {
+    gap: 12px;
+  }
+
+  /* ── Services ── */
   .services__grid {
     grid-template-columns: 1fr;
-    max-width: 500px;
+    max-width: 480px;
     margin: 0 auto;
   }
 
+  .section-header {
+    margin-bottom: 48px;
+  }
+
+  /* ── Contact ── */
   .contact__inner {
     grid-template-columns: 1fr;
-    gap: 48px;
+    gap: 40px;
   }
 
   .contact__form-wrap {
-    padding: 32px 24px;
+    padding: 28px 20px;
+  }
+
+  .contact__form h3 {
+    font-size: 1.4rem;
+    margin-bottom: 24px;
   }
 
   .form-row {
     grid-template-columns: 1fr;
   }
+
+  .contact__details {
+    gap: 20px;
+  }
 }
 
 @media (max-width: 480px) {
   .hero__title {
-    font-size: 2.2rem;
+    font-size: 2rem;
+  }
+
+  .hero__visual {
+    height: 220px;
+  }
+
+  .hero__main-flower {
+    width: 150px;
+    height: 150px;
+  }
+
+  .hero__ring--outer {
+    width: 200px;
+    height: 200px;
+  }
+
+  .hero__ring--inner {
+    width: 160px;
+    height: 160px;
+  }
+
+  /* On very small screens collapse stats to 2 items or tighten */
+  .hero__stat {
+    padding: 0 12px;
+  }
+
+  .hero__stat-label {
+    font-size: 0.65rem;
   }
 
   .btn {
@@ -1512,11 +1644,23 @@ h2 {
     margin: 0 auto;
   }
 
-  .section-header {
-    margin-bottom: 48px;
+  .about {
+    padding-block: 64px;
+  }
+
+  .services {
+    padding-block: 64px;
+  }
+
+  .contact {
+    padding-block: 64px;
   }
 
   .service-card {
-    padding: 32px 24px;
+    padding: 28px 20px;
+  }
+
+  .contact__form-wrap {
+    padding: 24px 16px;
   }
 }
